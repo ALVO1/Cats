@@ -53,15 +53,18 @@ object Application extends App {
 
   type KVStoreState[A] = State[Map[String, Any], A]
 
-  val pureInterpreter: KVStoreA ~> KVStoreState = new (KVStoreA ~> KVStoreState) {
+  /*val pureInterpreter: KVStoreA ~> KVStoreState = new (KVStoreA ~> KVStoreState) {
     def apply[A](storeManipulationFunction: KVStoreA[A]): KVStoreState[A] =
       storeManipulationFunction match {
-        case Put(key, value) => State(map => map.updated())
-        case Get(key) => State(map => (map, map(key).asInstanceOf[A]))
+        case Put(key, value) =>
+          val mod: KVStoreState[A] = State.modify[Map[String, Any]](elem => elem.updated(key, value))
+          mod
+        case Get(key) => State(map => (map, map(key)))
         case Delete(key) => State(map => (map - key, 0.asInstanceOf[A]))
       }
   }
 
-  val result: (Map[String, Any], Option[Int]) = program.foldMap(pureInterpreter).run(Map.empty).value
-  println(result)
+  val (map, int) = program.foldMap(pureInterpreter).run(Map.empty).value
+  println(map)
+  println(int)*/
 }
