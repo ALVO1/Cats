@@ -1,4 +1,4 @@
-import TypeClass.JsonInterfaceUsage
+import TypeClass.{JsonInterfaceUsage, JsonSyntaxUsage}
 
 /**
   * A type class is an interface or API that represents some functionality we
@@ -49,14 +49,28 @@ object TypeClass {
     }
   }
 
+  object JsonSyntax {
+    implicit class JsonWriterOps[A](value: A) {
+      def toJson(implicit writer: JsonWriter[A]): Json = writer.write(value)
+    }
+  }
+
   //Usage of type-class interface:
   object JsonInterfaceUsage {
     import JsonWriterInstances._
 
     def json: Json = JsonInterface.toJson(Person("Alvo", "testmail@test.com", 24))
   }
+
+  object JsonSyntaxUsage {
+    import JsonSyntax._
+    import JsonWriterInstances._
+
+    val json: Json = Person("Alvo", "testmail@test.com", 24).toJson
+  }
 }
 
 object TypeClassRunner extends App {
   println(JsonInterfaceUsage.json)
+  println(JsonSyntaxUsage.json)
 }
