@@ -1,4 +1,4 @@
-import KVStore.KVStore
+import KVStore.{KVStore, KVStoreState}
 import cats.data.State
 import cats.free.Free
 import cats.~>
@@ -17,6 +17,7 @@ object KVStore {
   //Create Free type based on ADT
 
   type KVStore[A] = Free[KVStoreA, A]
+  type KVStoreState[A] = State[Map[String, Any], A]
 
   // Create smart constructors with liftF
 
@@ -35,13 +36,20 @@ object KVStore {
     } yield ()
 }
 
+// Interpreter for the program
+object PureInterpreter extends (KVStoreA ~> KVStoreState) {
+  override def apply[A](fa: KVStoreA[A]): KVStoreState[A] = fa match {
+      case Put(key, value) => State.modify(_.updated(key, value))
+      case Get(key) => State.inspect(_.get(key).asInstanceOf[A])
+      case Delete(key) => State.modify(_ - key)
+  }
+}
 
 object Application extends App {
 
   // Build a program
 
-  def program: KVStore[Option[Int]] =
-    for {
+  def program: KVStore[Option[Int]] = for {
       _ <- KVStore.put("black-cats", 2)
       _ <- KVStore.update[Int]("black-cats", _ + 12)
       _ <- KVStore.put("white-cats", 5)
@@ -49,22 +57,7 @@ object Application extends App {
       _ <- KVStore.delete("white-cats")
     } yield n
 
-  // Interpreter for the program
-
-  type KVStoreState[A] = State[Map[String, Any], A]
-
-  /*val pureInterpreter: KVStoreA ~> KVStoreState = new (KVStoreA ~> KVStoreState) {
-    def apply[A](storeManipulationFunction: KVStoreA[A]): KVStoreState[A] =
-      storeManipulationFunction match {
-        case Put(key, value) =>
-          val mod: KVStoreState[A] = State.modify[Map[String, Any]](elem => elem.updated(key, value))
-          mod
-        case Get(key) => State(map => (map, map(key)))
-        case Delete(key) => State(map => (map - key, 0.asInstanceOf[A]))
-      }
-  }
-
-  val (map, int) = program.foldMap(pureInterpreter).run(Map.empty).value
-  println(map)
-  println(int)*/
+  val (map, int) = program.foldMap(PureInterpreter).run(Map.empty).value
+  println(map) // Map("black-cats" -> 14)
+  println(int) // Some(14)
 }

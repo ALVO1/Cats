@@ -66,7 +66,7 @@ object TypeClass {
     import JsonSyntax._
     import JsonWriterInstances._
 
-    val json: Json = Person("Alvo", "testmail@test.com", 24).toJson
+    def json: Json = Person("Alvo", "testmail@test.com", 24).toJson
   }
 }
 
