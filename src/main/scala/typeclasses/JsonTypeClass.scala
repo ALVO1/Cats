@@ -1,4 +1,7 @@
-import TypeClass.{JsonInterfaceUsage, JsonSyntaxUsage}
+package typeclasses
+
+import typeclasses.TypeClass.Json.JsNull
+import typeclasses.TypeClass.{JsonInterfaceUsage, JsonSyntaxUsage, JsonSyntaxUsageWithOption}
 
 /**
   * A type class is an interface or API that represents some functionality we
@@ -6,21 +9,29 @@ import TypeClass.{JsonInterfaceUsage, JsonSyntaxUsage}
   */
 object TypeClass {
 
+  final case class Person(name: String, email: String, age: Int)
+
   sealed trait Json
+
   object Json {
+
     final case class JsObject(get: Map[String, Json]) extends Json
+
     final case class JsString(get: String) extends Json
+
     final case class JsNumber(get: Double) extends Json
+
+    final case object JsNull extends Json
+
   }
 
   trait JsonWriter[A] {
     def write(content: A): Json
   }
 
-  final case class Person(name: String, email: String, age: Int)
-
   object JsonWriterInstances {
-    import Json.{JsString, JsObject, JsNumber}
+
+    import Json.{JsNumber, JsObject, JsString}
 
     implicit val stringJsonWriter: JsonWriter[String] = (content: String) => JsString(content)
 
@@ -34,6 +45,11 @@ object TypeClass {
           "age" -> JsNumber(person.age)
         )
       )
+    }
+
+    implicit def optionWriter[A](implicit writer: JsonWriter[A]): JsonWriter[Option[A]] = {
+      case Some(value: A) => writer.write(value)
+      case None => JsNull
     }
   }
 
@@ -55,22 +71,36 @@ object TypeClass {
     }
   }
 
-  //Usage of type-class interface:
+  //Test value
+  val person = Person("Alvo", "testmail@test.com", 24)
+
+  //Usage of type-class interface
   object JsonInterfaceUsage {
+
     import JsonWriterInstances._
 
-    def json: Json = JsonInterface.toJson(Person("Alvo", "testmail@test.com", 24))
+    def json: Json = JsonInterface.toJson(person)
   }
 
+  //Usage of type-class syntax
   object JsonSyntaxUsage {
+
     import JsonSyntax._
     import JsonWriterInstances._
 
-    def json: Json = Person("Alvo", "testmail@test.com", 24).toJson
+    def json: Json = person.toJson
+  }
+
+  object JsonSyntaxUsageWithOption {
+    import JsonSyntax._
+    import JsonWriterInstances._
+
+    def json: Json = Option(person).toJson
   }
 }
 
 object TypeClassRunner extends App {
   println(JsonInterfaceUsage.json)
   println(JsonSyntaxUsage.json)
+  println(JsonSyntaxUsageWithOption.json)
 }
