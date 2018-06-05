@@ -1,8 +1,10 @@
-import KVStore.{KVStore, KVStoreState}
+package free
+
 import cats.data.State
 import cats.free.Free
 import cats.~>
-import KVStoreA.{Delete, Get, Put}
+import free.KVStore.{KVStore, KVStoreState}
+import free.KVStoreA.{Delete, Get, Put}
 
 sealed trait KVStoreA[A]
 

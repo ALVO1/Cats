@@ -2,36 +2,23 @@ package typeclasses
 
 object PrintableTypeClass {
 
-  sealed trait PrintableADT
-
-  object PrintableADT {
-
-    case class AsString(value: String) extends PrintableADT
-
-    case class AsInt(value: Int) extends PrintableADT
-
-  }
-
   trait PrintableFormatter[A] {
-    def format(content: A): PrintableADT
+    def format(content: A): String
   }
 
   object PrintableInstances {
-
-    import PrintableADT._
-
     implicit val stringFormatter: PrintableFormatter[String] =
-      (content: String) => AsString(content)
+      (content: String) => content
 
     implicit val intFormatter: PrintableFormatter[Int] =
-      (content: Int) => AsInt(content)
+      (content: Int) => String.valueOf(content)
 
     implicit val catFormatter: PrintableFormatter[Cat] =
-      (cat: Cat) => AsString(s"${cat.name} is a ${cat.age} years old ${cat.color} cat.")
+      (cat: Cat) => s"${cat.name} is a ${cat.age} years old ${cat.color} cat."
   }
 
   object Printable {
-    def format[A](value: A)(implicit formatter: PrintableFormatter[A]): PrintableADT =
+    def format[A](value: A)(implicit formatter: PrintableFormatter[A]): String =
       formatter.format(value)
 
     def print[A](value: A)(implicit formatter: PrintableFormatter[A]): Unit =
@@ -41,9 +28,6 @@ object PrintableTypeClass {
   object PrintableSyntax {
 
     implicit class PrintableOps[A](value: A) {
-      def asString(implicit formatter: PrintableFormatter[A]): PrintableADT =
-        formatter.format(value)
-
       def print(implicit formatter: PrintableFormatter[A]): Unit =
         Console.println(formatter.format(value))
     }
@@ -76,7 +60,7 @@ object PrintableTypeClass {
 
 final case class Cat(name: String, age: Int, color: String)
 
-object PrintableTest extends App {
+object PrintableTypeClassTest extends App {
 
   import typeclasses.PrintableTypeClass.PrintableInterfaceUsage
   import typeclasses.PrintableTypeClass.PrintableSyntaxUsage
